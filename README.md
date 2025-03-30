@@ -26,8 +26,8 @@ Este projeto implementa uma automação usando n8n + Supabase para:
 1. Escuta um Webhook com informações como `nome` e `telefone` do contato  
    (Pode ser um Google Forms, Typeform, etc.)
 2. Faz a requisição para `POST /messages/send` na API da Callbell  
-   - **Sucesso:** Mapeia os dados em um Set e grava as informações em `status_mensagens_buffer` no Supabase  
-   - **Erro HTTP/lógico:** Mapeia os dados em um Set e grava as informações em `log_mensagens_buffer` no Supabase
+   - **Sucesso:** Mapeia os dados em um Set e grava as informações em `status_mensagens_buffer` no Supabase (incluindo erros lógicos, se houver)
+   - **Erro HTTP:** Mapeia os dados em um Set e grava as informações em `log_mensagens_buffer` no Supabase
 
 ---
 

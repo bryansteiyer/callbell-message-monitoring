@@ -20,8 +20,10 @@ A estrutura conta com:
 ---
 
 ## Estrutura
+![Estrutura](./assets/geral.jpeg)
 
 ### Fluxo 1: Disparo de Mensagem + Registro no Supabase
+![Fluxo 1](./assets/fluxo_1.jpeg)
 
 1. Escuta um Webhook com informações como `nome` e `telefone` do contato  
    (Pode ser um Google Forms, Typeform, etc.)
@@ -32,6 +34,7 @@ A estrutura conta com:
 ---
 
 ### Fluxo 2: Webhook Message Status Updated (Callbell)
+![Fluxo 2](./assets/fluxo_2.jpeg)
 
 1. Escuta o webhook `message_status_updated` da Callbell  
 2. Consulta o `uuid` da mensagem recebida em `status_mensagens_buffer`  
@@ -46,6 +49,7 @@ A estrutura conta com:
 ---
 
 ### Fluxo 3: Migração dos dados dos buffers para as tabelas reais
+![Fluxo 3](./assets/fluxo_3.jpeg)
 
 `log_mensagens` e `log_mensagens_buffer`
 

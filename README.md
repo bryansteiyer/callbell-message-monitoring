@@ -19,10 +19,6 @@ Este projeto implementa uma automação usando n8n + Supabase para:
 ---
 
 ## Estrutura
-![Estrutura](./assets/geral.jpeg)
-![Demonstração Fluxo 1](./assets/status_mensagem.mp4)
-![Demonstração Fluxo 2](./assets/erro_http.mp4)
-![Demonstração FLuxo 3](./assets/buffer_tabela_real.mp4)
 
 ### Fluxo 1: Disparo de Mensagem + Registro no Supabase
 ![Fluxo 1](./assets/fluxo_1.jpeg)

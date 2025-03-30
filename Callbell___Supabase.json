@@ -1,0 +1,1065 @@
+{
+  "name": "Callbell + Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.callbell.eu/v1/messages/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{$env.CALLBELL_API_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $json[\"body\"][\"phone\"] }}\",\n  \"from\": \"whatsapp\",\n  \"type\": \"text\",\n  \"content\": {\n    \"text\": \"{{1}}, obrigado por ter preenchido nosso formulário. Em breve entraremos em contato!\"\n  },\n  \"template_values\": [\"{{ $json[\"body\"][\"name\"] }}\"],\n  \"template_uuid\": \"{{$env.CALLBELL_TEMPLATE_UUID}}\",\n  \"channel_uuid\": \"{{$env.CALLBELL_CHANNEL_UUID}}\",\n  \"optin_contact\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -620,
+        -460
+      ],
+      "id": "ab67085e-83a4-4e71-ae4e-93fdf53b2051",
+      "name": "POST /messages/send",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "{PATH}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        -20
+      ],
+      "id": "56f8be5a-7946-49db-9ffa-9539437fc78e",
+      "name": "Webhook",
+      "webhookId": "{WEBHOOK_ID}"
+    },
+    {
+      "parameters": {
+        "content": "## Webhook Message Status Updated (Callbell)",
+        "height": 500,
+        "width": 1680
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        -180
+      ],
+      "typeVersion": 1,
+      "id": "19bd8968-1a95-41c3-b656-6328334c2509",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Disparo de Mensagem + Registro no Supabase",
+        "height": 460,
+        "width": 1300,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        -660
+      ],
+      "typeVersion": 1,
+      "id": "43717156-1ad3-4acf-a27c-695589cb8fac",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "{PATH}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        -460
+      ],
+      "id": "3ef7e606-878c-4ca7-ae14-c2f305a0bb85",
+      "name": "Postman",
+      "webhookId": "{WEBHOOK_ID}"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b5b992d-ce4e-4374-b707-f07f012368b0",
+              "leftValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}",
+              "rightValue": "enqueued",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        -20
+      ],
+      "id": "91c72599-c643-4c10-9147-a9a621da1f56",
+      "name": "É enqueued"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "db04dc82-f4f7-4309-a3e5-f112c4c073a8",
+              "leftValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        360,
+        120
+      ],
+      "id": "e2a46af7-e111-4bd5-b5dc-a4b93798616c",
+      "name": "É failed?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_mensagens_buffer",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $json[\"body\"][\"payload\"][\"uuid\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -20
+      ],
+      "id": "84346d4d-e79a-4b4c-867c-609f2bb7f3a9",
+      "name": "Get Many Rows | UUID",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "log_mensagens_buffer",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "status_code",
+              "fieldValue": "={{ $json[\"status_code\"] }}"
+            },
+            {
+              "fieldId": "error_code",
+              "fieldValue": "={{ $json[\"error_code\"] }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json[\"error_message\"] }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $json[\"phone\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -360
+      ],
+      "id": "2d91ae0b-ac97-435c-92d0-ac11b0adea9a",
+      "name": "Buffer Log Error",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -840,
+        640
+      ],
+      "id": "611472ca-3af5-4547-b9c1-11681341ccd5",
+      "name": "A cada 5 minutos"
+    },
+    {
+      "parameters": {
+        "content": "## Buffer Supabase + Processamento em Lote",
+        "height": 480,
+        "width": 1300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        340
+      ],
+      "typeVersion": 1,
+      "id": "6904599c-507a-45b2-b7b9-42f909052f98",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_mensagens_buffer",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        460
+      ],
+      "id": "84bd4d69-2f5d-4f41-b9b2-42087ed1819d",
+      "name": "Get | Status Buffer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "log_mensagens_buffer",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        640
+      ],
+      "id": "b4bcc0c2-d4dd-4dab-9ed0-db52d3021ff6",
+      "name": "Get | Error Buffer",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "812c7a82-d3ae-4997-a011-17528d32c2ba",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "63094ec0-86c0-4ab9-afd4-95040e23fa0c",
+              "name": "status_code",
+              "value": "={{ $json[\"error\"][\"status\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "79fcf414-d958-4ab7-9d99-ea74901624ca",
+              "name": "error_code",
+              "value": "={{ $json[\"error\"][\"code\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "7064dba7-19c7-4bbb-bfd5-0c47c46e618d",
+              "name": "error_message",
+              "value": "={{ $json[\"error\"][\"message\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "a6bbf972-c24d-43da-9713-97efcfada056",
+              "name": "phone",
+              "value": "={{ $json[\"body\"][\"phone\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -360
+      ],
+      "id": "f151c021-ade6-479e-897d-b5938c0b7355",
+      "name": "Log Erro"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2ebd11d5-febb-42d4-8a18-6040434c6697",
+              "name": "status_1",
+              "value": "={{ $json[\"message\"][\"status\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "c6a94fe9-c6c3-483c-a577-f294f7bf3461",
+              "name": "data_status_1",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "d9224387-60c1-491c-83a9-30095eca39b4",
+              "name": "uuid",
+              "value": "={{ $json[\"message\"][\"uuid\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -540
+      ],
+      "id": "97ee9b63-cd92-4cc3-b751-9169df5aca36",
+      "name": "Log Status"
+    },
+    {
+      "parameters": {
+        "tableId": "status_mensagens_buffer",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "uuid",
+              "fieldValue": "={{ $json[\"uuid\"] }}"
+            },
+            {
+              "fieldId": "status_1",
+              "fieldValue": "={{ $json[\"status_1\"] }}"
+            },
+            {
+              "fieldId": "data_status_1",
+              "fieldValue": "={{ $json[\"data_status_1\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -540
+      ],
+      "id": "e2ef8d1c-80de-47fb-9958-7dd4e7593ef3",
+      "name": "Buffer Log Status",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "status_mensagens_buffer",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"uuid\"] }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status_2",
+              "fieldValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}"
+            },
+            {
+              "fieldId": "data_status_2",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -60
+      ],
+      "id": "5f49e81f-db2a-4961-bac4-8eb896512749",
+      "name": "Update Buffer Status | status_2 data_status_2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "status_mensagens_buffer",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"uuid\"] }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status_3",
+              "fieldValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}"
+            },
+            {
+              "fieldId": "data_status_3",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -60
+      ],
+      "id": "96b40483-848a-4294-acfc-5c11f44f5e47",
+      "name": "Update Buffer Status | status_3 data_status_3",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "status_mensagens_buffer",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"uuid\"] }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "motivo_falha",
+              "fieldValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"messageStatusPayload\"][\"payload\"][\"reason\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -60
+      ],
+      "id": "6bf9bc36-6142-4493-8291-9f4bad66a3fc",
+      "name": "Update Buffer Status | Motivo Falha",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "log_mensagens",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ $json[\"timestamp\"] }}"
+            },
+            {
+              "fieldId": "status_code",
+              "fieldValue": "={{ $json[\"status_code\"] }}"
+            },
+            {
+              "fieldId": "error_code",
+              "fieldValue": "={{ $json[\"error_code\"] }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json[\"error_message\"] }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $json[\"phone\"] }}"
+            },
+            {
+              "fieldId": "uuid",
+              "fieldValue": "={{ $json[\"uuid\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        640
+      ],
+      "id": "6d2aa1cc-211a-4723-9b9e-6cc12535ac4c",
+      "name": "Create | Log Error",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "status_mensagens",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "uuid",
+              "fieldValue": "={{ $json[\"uuid\"] }}"
+            },
+            {
+              "fieldId": "status_1",
+              "fieldValue": "={{ $json[\"status_1\"] }}"
+            },
+            {
+              "fieldId": "data_status_1",
+              "fieldValue": "={{ $json[\"data_status_1\"] }}"
+            },
+            {
+              "fieldId": "status_2",
+              "fieldValue": "={{ $json[\"status_2\"] }}"
+            },
+            {
+              "fieldId": "data_status_2",
+              "fieldValue": "={{ $json[\"data_status_2\"] }}"
+            },
+            {
+              "fieldId": "status_3",
+              "fieldValue": "={{ $json[\"status_3\"] }}"
+            },
+            {
+              "fieldId": "data_status_3",
+              "fieldValue": "={{ $json[\"data_status_3\"] }}"
+            },
+            {
+              "fieldId": "status_4",
+              "fieldValue": "={{ $json[\"status_4\"] }}"
+            },
+            {
+              "fieldId": "data_status_4",
+              "fieldValue": "={{ $json[\"data_status_4\"] }}"
+            },
+            {
+              "fieldId": "motivo_falha",
+              "fieldValue": "={{ $json[\"motivo_falha\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        460
+      ],
+      "id": "ac598a91-84a3-428b-bfe6-bab984252621",
+      "name": "Create | Log Status",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "47e921fb-96c1-48f4-bd2c-f67c7dbbaada",
+              "leftValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}",
+              "rightValue": "sent",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        80
+      ],
+      "id": "b3fb979a-17b3-4d40-a3ac-d5651fa84556",
+      "name": "É sent?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "47e921fb-96c1-48f4-bd2c-f67c7dbbaada",
+              "leftValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}",
+              "rightValue": "delivered",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -40,
+        120
+      ],
+      "id": "4207758a-3e76-41f4-83ae-f9aa60111739",
+      "name": "É delivered?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "status_mensagens_buffer",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"uuid\"] }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status_4",
+              "fieldValue": "={{ $node[\"Webhook\"].json[\"body\"][\"payload\"][\"status\"] }}"
+            },
+            {
+              "fieldId": "data_status_4",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        180,
+        120
+      ],
+      "id": "e916b2c3-e183-4301-ab8c-4cdf9bdcb9a4",
+      "name": "Update Buffer Status | status_4 data_status_4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "log_mensagens_buffer",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $json[\"uuid\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        640
+      ],
+      "id": "01b6d9b7-82a9-4176-9b67-623950ef6f6c",
+      "name": "Delete Log Error Buffer | UUID",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "status_mensagens_buffer",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uuid",
+              "condition": "eq",
+              "keyValue": "={{ $json[\"uuid\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        460
+      ],
+      "id": "b9a0c9b2-cc3b-4940-85f5-8d26de8a6e66",
+      "name": "Delete Status Buffer | UUID",
+      "credentials": {
+        "supabaseApi": {
+          "id": "{SUPABASEAPI_ID}",
+          "name": "{MINHA_CONTA}"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "POST /messages/send": {
+      "main": [
+        [
+          {
+            "node": "Log Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Many Rows | UUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postman": {
+      "main": [
+        [
+          {
+            "node": "POST /messages/send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É enqueued": {
+      "main": [
+        [],
+        [
+          {
+            "node": "É sent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É failed?": {
+      "main": [
+        [
+          {
+            "node": "Update Buffer Status | Motivo Falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Many Rows | UUID": {
+      "main": [
+        [
+          {
+            "node": "É enqueued",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A cada 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Get | Error Buffer",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get | Status Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get | Error Buffer": {
+      "main": [
+        [
+          {
+            "node": "Create | Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Erro": {
+      "main": [
+        [
+          {
+            "node": "Buffer Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Status": {
+      "main": [
+        [
+          {
+            "node": "Buffer Log Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Buffer Status | status_3 data_status_3": {
+      "main": [
+        []
+      ]
+    },
+    "Create | Log Error": {
+      "main": [
+        [
+          {
+            "node": "Delete Log Error Buffer | UUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get | Status Buffer": {
+      "main": [
+        [
+          {
+            "node": "Create | Log Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create | Log Status": {
+      "main": [
+        [
+          {
+            "node": "Delete Status Buffer | UUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É sent?": {
+      "main": [
+        [
+          {
+            "node": "Update Buffer Status | status_2 data_status_2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É delivered?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É delivered?": {
+      "main": [
+        [
+          {
+            "node": "Update Buffer Status | status_3 data_status_3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Buffer Status | status_4 data_status_4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Buffer Status | status_4 data_status_4": {
+      "main": [
+        [
+          {
+            "node": "É failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Log Error Buffer | UUID": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "101410ed-4c31-49e2-ae34-71d7754edf98",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a4ea2f38884364e408aaa118a0718737dcae502adab61f5ab51188a047d0b8d"
+  },
+  "id": "d0WtJ1Zg8O3ODFkI",
+  "tags": []
+}

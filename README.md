@@ -1,4 +1,4 @@
-# callbell-message-monitoring
+# message-monitoring
 
 Este projeto implementa uma automação usando n8n + Supabase para:
 

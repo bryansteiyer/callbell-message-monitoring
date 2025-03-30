@@ -1,6 +1,6 @@
 # callbell-message-monitoring
 
-Esse projeto implementa uma solução para envio de mensagem via Callbell, monitorando o status de entrega e armazenando erros no Supabase.
+Esse projeto implementa uma solução para envio de mensagem via Callbell, monitorando cada status e armazenando erros no Supabase.
 
 A estrutura conta com:
 1. Registro de envio bem-sucedido

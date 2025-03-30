@@ -1,13 +1,12 @@
 # callbell-message-monitoring
 
-Esse projeto implementa uma solução para envio de mensagem via Callbell, monitorando cada status e armazenando erros no Supabase.
+Este projeto implementa uma automação usando n8n + Supabase para:
 
-A estrutura conta com:
-1. Registro de envio bem-sucedido
-2. Detecção de erros
-3. Armazenamento dos status das mensagens e erros em buffers
-4. Processamento e migração em lot dos dados para as tabelas principais
-5. Exclusão de dados do buffer após migração de dados
+- Envio de mensagens via Callbell
+- Monitoramento dos status das mensagens (enqueued, sent, delivered, read, failed, mismatch e deleted)
+- Registro de erros HTTP e lógicos
+- Armazenamento de dados em buffer e migração em lote para tabelas principais
+- Exclusão de dados do buffer após migração de dados
 
 ---
 

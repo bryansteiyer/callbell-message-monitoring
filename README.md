@@ -53,25 +53,4 @@ Este projeto implementa uma automação usando n8n + Supabase para:
 
 1. A cada 5 minutos os dados das tabelas `log_mensagens_buffer` e `status_mensagens_buffer` são lidos  
 2. Os dados são inseridos nas tabelas reais `log_mensagens` e `status_mensagens`  
-3. É feita a exclusão dos dados salvos nas tabelas buffer  
-
----
-
-## Tabelas do Supabase
-
-### `log_mensagens` e `log_mensagens_buffer`
-
-- `created_at`  
-- `status_code`  
-- `error_code`  
-- `error_message`  
-- `phone`  
-
-### `status_mensagens` e `status_mensagens_buffer`
-
-- `uuid`  
-- `status_1`, `data_status_1`  
-- `status_2`, `data_status_2`  
-- `status_3`, `data_status_3`  
-- `status_4`, `data_status_4`  
-- `motivo_falha`
+3. É feita a exclusão dos dados salvos nas tabelas buffer
